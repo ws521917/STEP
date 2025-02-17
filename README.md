@@ -30,18 +30,5 @@ For example, `saved_models/TC/settings.yml` contains hyperparameter settings of 
   ```shell
   python ./model/run.py --dataset TC --dim 32 
   ```
-#### Study of Different Variants:
-- For Base model:
-  ```shell
-  python ./model/run.py --dataset TC --dim 16
-  ```
-- For +Pre model:
-  ```shell
-  python ./model/run.py --dataset TC --dim 16 --topic 400
-  ```
-- For +At model :
-  ```shell
-  python ./model/run.py --dataset TC --dim 16 --at attn
-  ```
 
 
