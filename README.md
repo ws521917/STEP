@@ -3,7 +3,7 @@ This is the PyTorch implementation of the Semantic and Temporal Enhanced Predict
 
 * Model Framework
 <p align="middle" width="100%">
-  <img src="fig/framework.png" width="60%"/>
+  <img src="fig/framework.png" width="80%"/>
 </p>
 
 ### Configurations
