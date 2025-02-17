@@ -6,8 +6,6 @@ from torch import nn
 
 
 
-from time_pre import GATModel
-
 
 class PositionalEncoding(nn.Module):
     def __init__(self, emb_dim, max_len=512):
@@ -34,18 +32,16 @@ class MyEmbedding(nn.Module):
         self.config = config
 
         self.num_locations = config.Dataset.num_locations
-        self.num_locaiton_category = 5
-        self.num_time_category = 4
+        self.num_locaiton_prototypes = 5
         self.base_dim = config.Embedding.base_dim
         self.num_users = config.Dataset.num_users
 
         
         self.user_embedding = nn.Embedding(self.num_users, self.base_dim)
         self.location_embedding = nn.Embedding(self.num_locations, self.base_dim)
-        self.cat_embedding = nn.Embedding(self.num_locaiton_category, self.base_dim)
-        self.query_proj = nn.Linear(self.base_dim, self.base_dim)
-        self.key_proj = nn.Linear(self.base_dim, self.base_dim)
-        self.value_proj = nn.Linear(self.base_dim, self.base_dim)
+        self.prototypes_embedding = nn.Embedding(self.num_locaiton_prototypes, self.base_dim)
+        self.loc_proj = nn.Linear(self.base_dim, self.base_dim)
+        self.proto_proj = nn.Linear(self.base_dim, self.base_dim)
         self.softmax = nn.Softmax(dim=-1)
 
 
@@ -63,14 +59,14 @@ class MyEmbedding(nn.Module):
         user_embedded = self.user_embedding(torch.arange(end=self.num_users, dtype=torch.int, device=location_x.device))
 
         timeslot_embedded = self.timeslot_embedding(torch.arange(end=168, dtype=torch.int, device=location_x.device))
-        cat_embedded = self.cat_embedding(
-                torch.arange(end=self.num_locaiton_category, dtype=torch.int, device=location_x.device)
-            )  # Shape: (num_cats, base_dim)
-        Q = self.query_proj(location_all)  # Shape: (num_locations, base_dim)
-        K = self.key_proj(cat_embedded)  # Shape: (num_cats, base_dim)
-        V = cat_embedded # Shape: (num_cats, base_dim)
-        attn_scores = torch.matmul(Q, K.T) / (self.base_dim ** 0.5)  # Scaled dot-product, Shape: (num_locations, num_cats)
-        attn_weights = self.softmax(attn_scores)  # Normalize scores, Shape: (num_locations, num_cats)
-        loc_cat_repr = torch.matmul(attn_weights, V)  # Shape: (num_locations, base_dim)
+        prototypes_embedded = self.prototypes_embedding(
+                torch.arange(end=self.num_locaiton_prototypes, dtype=torch.int, device=location_x.device)
+            )  # Shape: (num_prototypes, base_dim)
+        loc_embedded = self.loc_proj(location_all)  # Shape: (num_locations, base_dim)
+        proto_embedded = self.proto_proj(prototypes_embedded)  # Shape: (num_prototypes, base_dim)
+        V = prototypes_embedded # Shape: (num_prototypes, base_dim)
+        weight_scores = torch.matmul(loc_embedded, proto_embedded.T) / (self.base_dim ** 0.5)  # Scaled dot-product, Shape: (num_locations, num_prototypes)
+        weights = self.softmax(weight_scores)  # Normalize scores, Shape: (num_locations, num_prototypes)
+        loc_proto_repr = torch.matmul(weights, prototypes_embedded)  # Shape: (num_locations, base_dim)
 
-        return location_all, timeslot_embedded, user_embedded, loc_cat_repr
+        return location_all, timeslot_embedded, user_embedded, loc_proto_repr

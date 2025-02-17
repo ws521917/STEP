@@ -34,26 +34,4 @@ class TransEncoder(nn.Module):
                 init.xavier_uniform_(p)
 
 
-class LSTMEncoder(nn.Module):
-    def __init__(self, config):
-        super(LSTMEncoder, self).__init__()
-        input_dim = config.Embedding.base_dim
-
-        self.encoder = nn.LSTM(input_size=input_dim,
-                               hidden_size=input_dim,
-                               num_layers=2,
-                               dropout=0.1,
-                               batch_first=True)
-        self.initialize_parameters()
-
-    def forward(self, out):
-        out, _ = self.encoder(out)
-
-        return out
-
-    def initialize_parameters(self):
-        for p in self.parameters():
-            if p.dim() > 1:
-                init.xavier_uniform_(p)
-
 

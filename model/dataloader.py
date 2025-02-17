@@ -20,10 +20,6 @@ class MyDataset(Dataset):
         self.user2id = np.load(os.path.join(dataset_path, 'user_mapper.npy'), allow_pickle=True).item()
         self.location2id = np.load(os.path.join(dataset_path, 'location_mapper.npy'), allow_pickle=True).item()
 
-        if self.config.Dataset.topic_num > 0:
-            if not os.path.exists(os.path.join(dataset_path, f'user_topic_loc_{self.config.Dataset.topic_num}.npy')):
-                self.preprocess_data(topic_num=self.config.Dataset.topic_num)
-
         if load_mode == 'test':
             self.data = self.load_npy_file(os.path.join(dataset_path, f'{load_mode}.npy'))
         else:
@@ -70,7 +66,7 @@ class MyDataset(Dataset):
                     else:
                       timestamp_pre = [item.split('@')[1] for item in stay_points[split_start-1:split_end -1]]
                     timeslot_y = []
-                    hour_x = []
+                    timeslot_x = []
                     weekday_x = []
                     weekend_y = []
                     for item1, item2 in zip(timestamp_x, timestamp_pre):
@@ -80,9 +76,9 @@ class MyDataset(Dataset):
                         weekday, hour = datetime_to_features(item)
                         time_x = 24 * weekday + hour
                         if self.dataset:
-                            hour_x.append(hour)
+                            timeslot_x.append(hour)
                         else:
-                            hour_x.append(time_x)
+                            timeslot_x.append(time_x)
                         weekday_x.append(weekday)
                     for item in timestamp_y:
                         weekday, hour = datetime_to_features(item)
@@ -96,7 +92,7 @@ class MyDataset(Dataset):
                         {
                             'user': self.user2id[user],
                             'location_x': location_x,
-                            'hour': hour_x,
+                            'timeslot': timeslot_x,
                             'weekday': weekday_x,
                             'location_y': location_y,
                             'timeslot_y': timeslot_y,
@@ -115,13 +111,6 @@ class MyDataset(Dataset):
         for data in loaded_data:
             user_idx = data['user']
             data['prob_matrix_time_individual'] = prob_matrix_time_individual[user_idx]
-        if self.config.Dataset.topic_num > 0:
-            user_topic_loc = np.load(
-                os.path.join(self.dataset_path, f'user_topic_loc_{self.config.Dataset.topic_num}.npy'),
-                allow_pickle=True)
-            for data in loaded_data:
-                user_idx = data['user']
-                data['user_topic_loc'] = user_topic_loc[user_idx]
         return loaded_data
 
 def datetime_to_features(timestamp):

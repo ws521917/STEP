@@ -39,25 +39,13 @@ def get_user_input():
 def custom_collate(batch, device, config):
     batch_dict = {
         'user': torch.tensor([item['user'] for item in batch]).to(device),
-        # 'loc_his': torch.stack([item['loc_his'].clone().detach() for item in batch]).to(device),
-        # 'loc_cur': torch.stack([item['loc_cur'].clone().detach() for item in batch]).to(device),
-        # 'timeslot_cur': torch.stack([item['timeslot_his'].clone().detach() for item in batch]).to(device),
-        # 'timeslot_his': torch.stack([item['timeslot_cur'].clone().detach() for item in batch]).to(device),
-        # 'weekday_his': torch.stack([item['weekday_his'].clone().detach() for item in batch]).to(device),
-        # 'weekday_cur': torch.stack([item['weekday_cur'].clone().detach() for item in batch]).to(device),
-        # 'loc_label': torch.tensor([item['loc_label'] for item in batch]).to(device),
         'location_x': torch.stack([torch.tensor(item['location_x']) for item in batch]).to(device),
-        'hour': torch.stack([torch.tensor(item['hour']) for item in batch]).to(device),
+        'timeslot': torch.stack([torch.tensor(item['timeslot']) for item in batch]).to(device),
         'weekday': torch.stack([torch.tensor(item['weekday']) for item in batch]).to(device),
-        'huodong': torch.stack([torch.tensor(item['huodong']) for item in batch]).to(device),
         'location_y': torch.tensor([item['location_y'] for item in batch]).to(device),
         'timeslot_y': torch.tensor([item['timeslot_y'] for item in batch]).to(device),
-        'hour_mask': torch.stack([torch.tensor(item['hour_mask']) for item in batch]).to(device),
         'prob_matrix_time_individual': torch.stack([torch.tensor(item['prob_matrix_time_individual']) for item in batch]).to(device),
     }
-
-    if config.Dataset.topic_num > 0:
-        batch_dict['user_topic_loc'] = torch.stack([torch.tensor(item['user_topic_loc'], dtype=torch.float32) for item in batch]).to(device)
 
     return batch_dict
 
@@ -192,8 +180,7 @@ def run_test(dataset_path, model_path, model, device, epoch, test_only,type):
     top_k_accuracy_loc = [count / total_samples * 100 for count in list(top_k_correct_loc)]
     result_str = "*********************** Test ***********************\n"
     result_str += f"This training process is for: {type} \n"
-    result_str += f"base_dim: {config.Embedding.base_dim} | dim: {config.Embedding.base_dim}\n"
-    result_str += f"AT_type: {config.Model.at_type} | topic_num: {config.Dataset.topic_num}\n"
+    result_str += f"base_dim: {config.Embedding.base_dim}\n"
     result_str += f"encoder: {config.Encoder.encoder_type}\n"
     result_str += f"Epoch {epoch + 1}: Total {total_samples} predictions on Next Location:\n"
     for k, accuracy in zip(top_k_values, top_k_accuracy_loc):
@@ -223,12 +210,12 @@ def train_epoch(model, dataloader, optimizer, loss_fn, scheduler):
     total_loss_epoch = 0.0
 
     for batch_data in dataloader:
-        location_output = model(batch_data)
+        location_output,time_output = model(batch_data)
         location_y = batch_data['location_y'].view(-1)
         time_y =batch_data['timeslot_y'].view(-1)
 
-        # location_loss = 0.5 * loss_fn(location_output, location_y) + 0.5 * loss_fn(time_output,time_y)
-        location_loss = loss_fn(location_output, location_y) 
+        location_loss = 0.5 * loss_fn(location_output, location_y) + 0.5 * loss_fn(time_output,time_y)
+        # location_loss = loss_fn(location_output, location_y)
 
 
         total_loss = location_loss.sum()
@@ -255,5 +242,3 @@ def save_checkpoint(save_dir, model, optimizer, best_val_loss, epoch):
 def get_time_str():
     return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
-if __name__ == '__main__':
-    get_mapper(dataset_path='D:\sen\pythonprojects\MCLP-main/data/TC')

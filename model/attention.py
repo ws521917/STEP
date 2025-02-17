@@ -10,9 +10,9 @@ class Attention(nn.Module):
         self.num_heads = 4
         self.head_dim = self.base_dim // self.num_heads
         self.num_locations = config.Dataset.num_locations
-        self.num_locaiton_category = 5
+        self.num_locaiton_prototypes = 5
 
-        self.locaiton_category = nn.Embedding(self.num_locaiton_category, self.base_dim)
+        self.locaiton_prototypes = nn.Embedding(self.num_locaiton_prototypes, self.base_dim)
         self.w_q = nn.ModuleList(
                 [nn.Linear(self.base_dim, self.head_dim) for _ in range(self.num_heads)])
         self.w_k = nn.ModuleList(
@@ -21,12 +21,12 @@ class Attention(nn.Module):
                 [nn.Linear(self.base_dim, self.head_dim) for _ in range(self.num_heads)])
         self.unify_heads = nn.Linear(self.base_dim, self.base_dim)
 
-    def forward(self,combined_embedding,loc_cat_embedding,batch_data):
+    def forward(self,combined_embedding,loc_proto_embedding,batch_data):
         user_x = batch_data['user']
         loc_x  = batch_data['location_x']
         batch_size, sequence_length = loc_x.shape
 
-        K = loc_cat_embedding # (num_categories, embedding_dim)
+        K = loc_proto_embedding # (num_prototypes, embedding_dim)
         
         head_outputs = []
    

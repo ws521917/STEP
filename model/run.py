@@ -17,12 +17,9 @@ parser.add_argument('--seed', type=int, default=1234)
 parser.add_argument('--dataset', type=str, default='TC')
 parser.add_argument('--test', type=bool, default=False)
 parser.add_argument('--dim', type=int, default=32, help='must be a multiple of 4')
-parser.add_argument('--topic', type=int, default=0, help='LDA topic num')
-parser.add_argument('--at', type=str, default='none', help='arrival time module type')
 parser.add_argument('--encoder', type=str, default='trans', help='encoder type')
 parser.add_argument('--batch', type=int, default=128, help='batch size')
 parser.add_argument('--epoch', type=int, default= 50, help='epoch num')
-parser.add_argument('--type', type=str, default='base', help='xunlianleixing')
 args = parser.parse_args()
 
 gpu_list = args.gpu
@@ -82,9 +79,7 @@ def plot_metrics(losses, acc1, acc10, mrr, args):
 if __name__ == '__main__':
     get_mapper(dataset_path=dataset_path)
 
-    update_config(config_path, key_list=['Dataset', 'topic_num'], value=args.topic)
     update_config(config_path, key_list=['Model', 'seed'], value=args.seed)
-    update_config(config_path, key_list=['Model', 'at_type'], value=args.at)
     update_config(config_path, key_list=['Embedding', 'base_dim'], value=args.dim)
     update_config(config_path, key_list=['Encoder', 'encoder_type'], value=args.encoder)
     update_config(config_path, key_list=['Model', 'batch_size'], value=args.batch)
@@ -92,21 +87,19 @@ if __name__ == '__main__':
     config = get_config(config_path, easy=True)
 
     dataset = MyDataset(config=config, dataset_path=dataset_path, device=device, load_mode='train')
-    # dataset = LocationPredictionDataset(dataset_path=dataset_path, mode='train')
     batch_size = config.Model.batch_size
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=True,
                             collate_fn=lambda batch: custom_collate(batch, device, config))
     model = MyModel(config)
     model.to(device)
     loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
-    #loss_fn = torch.nn.NLLLoss(reduction='mean')
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Total training samples: {len(dataloader) * batch_size} | Total trainable parameters: {total_params}")
     optimizer = torch.optim.Adam(model.parameters(), lr=config.Adam_optimizer.initial_lr,
                                          weight_decay=config.Adam_optimizer.weight_decay)
 
     print(f"Dataset: {args.dataset} | Device: {device} | Model: {config.Encoder.encoder_type}")
-    print(f"AT type: {config.Model.at_type} | topic_num: {config.Dataset.topic_num} | dim: {config.Embedding.base_dim}")
+    print(f"dim: {config.Embedding.base_dim}")
 
     if test_only:
         save_dir = f'./saved_models/{save_path}'

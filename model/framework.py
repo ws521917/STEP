@@ -31,7 +31,7 @@ class MyModel(nn.Module):
             self.encoder = TransEncoder(config,emb_dim)
             self.encoder_time = TransEncoder(config,emb_dim)
 
-        fc_input_dim = self.base_dim + self.base_dim   #  --------------------维度更改在这里----------------------------
+        fc_input_dim = self.base_dim + self.base_dim
         fc_input_dim_time = self.base_dim + self.base_dim 
 
 
@@ -54,7 +54,7 @@ class MyModel(nn.Module):
 
         user_x = batch_data['user']
         loc_x = batch_data['location_x']
-        hour_x = batch_data['hour']
+        hour_x = batch_data['timeslot']
         time_y = batch_data['timeslot_y']
         batch_size, sequence_length = loc_x.shape
 
@@ -62,11 +62,11 @@ class MyModel(nn.Module):
 
 
         
-        loc_embedded_yuan, timeslot_embedded,user_embedded_yuan, locaiton_category_embedded = self.embedding_layer(batch_data)
+        loc_embedded_yuan, timeslot_embedded,user_embedded_yuan, locaiton_prototypes_embedded = self.embedding_layer(batch_data)
 
         time_embedded = timeslot_embedded[hour_x]
         loc_embedded = loc_embedded_yuan[loc_x]
-        location_category_embedding = locaiton_category_embedded[loc_x]
+        location_prototypes_embedding = locaiton_prototypes_embedded[loc_x]
         
 
 
@@ -102,14 +102,14 @@ class MyModel(nn.Module):
 
 
 
-        user_time_embedded=torch.cat([user_time_embedded, loc_embedded+location_category_embedding], dim=-1)
+        user_time_embedded=torch.cat([user_time_embedded, loc_embedded], dim=-1)
 
 #-----------------------------------------------------------------------------------------------------------------------
 
 
         combined_cf=self.linear(combined)
 
-        attention_output=self.attention(combined_cf,locaiton_category_embedded,batch_data)
+        attention_output=self.attention(combined_cf,locaiton_prototypes_embedded,batch_data)
 
         combined=torch.cat([combined, attention_output], dim=-1)
 
