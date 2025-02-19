@@ -64,7 +64,6 @@ class MyEmbedding(nn.Module):
             )  # Shape: (num_prototypes, base_dim)
         loc_embedded = self.loc_proj(location_all)  # Shape: (num_locations, base_dim)
         proto_embedded = self.proto_proj(prototypes_embedded)  # Shape: (num_prototypes, base_dim)
-        V = prototypes_embedded # Shape: (num_prototypes, base_dim)
         weight_scores = torch.matmul(loc_embedded, proto_embedded.T) / (self.base_dim ** 0.5)  # Scaled dot-product, Shape: (num_locations, num_prototypes)
         weights = self.softmax(weight_scores)  # Normalize scores, Shape: (num_locations, num_prototypes)
         loc_proto_repr = torch.matmul(weights, prototypes_embedded)  # Shape: (num_locations, base_dim)
