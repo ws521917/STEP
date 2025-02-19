@@ -7,9 +7,9 @@ This is the PyTorch implementation of the Semantic and Temporal Enhanced Predict
 </p>
 
 ### Configurations
-For TC datasets, the embedding dimensions of the proposed model are set to 32, while for MP,it's 16.  
+For TC datasets, the embedding dimensions of the proposed model are set to 32, while for MP, it's 16.  
 The Transformer encoder consists of 2 layers, each with 4 attention heads and a dropout rate of 0.1.  
-We train MCLP for 50 epochs with a batch size of 128. 
+We train STEP for 50 epochs with a batch size of 128. 
 
 ### Requirements
 The runtime environment can be viewed in requirements.txt or by executing the following command:
